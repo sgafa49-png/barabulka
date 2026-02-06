@@ -484,12 +484,13 @@ async def button_handler(update: Update, context: CallbackContext) -> None:
         return
     
     if query.data == 'send_reputation':
-        text = """<b>Отправьте репутацию.</b>
+        text = """<b><i>🛡️Отправьте репутацию.</i></b>
 
-К репутации необходимо приложить хотя бы одну фотографию.
+• К репутации необходимо приложить хотя бы одну фотографию.
+<blockquote>Пример «+rep @username все идеально»
+Пример «-rep [id] сделка не зашла»</blockquote>
 
-Пример «+rep @username все идеально»
-Пример «-rep user_id сделка не зашла»"""
+<b>• Отправляйте репутацию строго по шаблону.</b>"""
         
         keyboard = [[InlineKeyboardButton("↩️ Назад", callback_data='back_to_main')]]
         reply_markup = InlineKeyboardMarkup(keyboard)
@@ -1057,8 +1058,8 @@ async def handle_search_message_pm(update: Update, context: CallbackContext) -> 
     context.user_data.pop('waiting_for_search', None)
 
 # ========== ЗАПУСК БОТА ==========
-def main():
-    """Основная функция запуска"""
+async def main_async():
+    """Асинхронная основная функция"""
     print("=" * 60)
     print("TESS REPUTATION BOT")
     print("=" * 60)
@@ -1113,36 +1114,23 @@ def main():
     # Обработчик ВСЕХ сообщений (включая группы)
     app.add_handler(MessageHandler(filters.ALL & ~filters.COMMAND, handle_all_messages))
     
-    # Функция для установки кнопки меню
-    async def init_menu():
-        """Устанавливаем кнопку меню один раз при запуске"""
-        await app.bot.set_chat_menu_button(
-            menu_button=MenuButtonCommands()
-        )
-        print("✅ Кнопка 'Меню' установлена")
+    # Устанавливаем кнопку меню
+    await app.bot.set_chat_menu_button(
+        menu_button=MenuButtonCommands()
+    )
+    print("✅ Кнопка 'Меню' установлена")
     
-    # Запускаем бота с инициализацией меню
+    # Запускаем бота
     print("Бот запускается...")
+    print("Готов к работе!")
+    print("=" * 60)
     
-    # Создаем и запускаем event loop
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    
-    try:
-        # Устанавливаем кнопку меню
-        loop.run_until_complete(init_menu())
-        
-        # Запускаем polling
-        print("Готов к работе!")
-        print("=" * 60)
-        app.run_polling(
-            allowed_updates=Update.ALL_TYPES,
-            close_loop=False  # Не закрывать loop после остановки
-        )
-    except KeyboardInterrupt:
-        print("\nБот остановлен")
-    finally:
-        loop.close()
+    # Запускаем polling
+    await app.run_polling(allowed_updates=Update.ALL_TYPES)
+
+def main():
+    """Точка входа - запускаем асинхронную функцию"""
+    asyncio.run(main_async())
 
 if __name__ == '__main__':
     main()
