@@ -408,7 +408,7 @@ ID - [{user_id}]
     
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    # Отправляем фото с GitHub
+    # Отправляем фото с текстом в качестве подписи
     try:
         print(f"Отправляю фото по URL: {PHOTO_URL}")
         await update.message.reply_photo(
@@ -491,7 +491,13 @@ async def button_handler(update: Update, context: CallbackContext) -> None:
         
         keyboard = [[InlineKeyboardButton("↩️ Назад", callback_data='back_to_main')]]
         reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.edit_message_text(text, reply_markup=reply_markup, parse_mode='HTML')
+        
+        # Используем edit_message_caption вместо edit_message_text
+        await query.edit_message_caption(
+            caption=text,
+            reply_markup=reply_markup,
+            parse_mode='HTML'
+        )
         context.user_data['waiting_for_rep'] = True
     
     elif query.data == 'search_user':
@@ -499,7 +505,12 @@ async def button_handler(update: Update, context: CallbackContext) -> None:
         
         keyboard = [[InlineKeyboardButton("↩️ Назад", callback_data='back_to_main')]]
         reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.edit_message_text(text, reply_markup=reply_markup, parse_mode='HTML')
+        
+        await query.edit_message_caption(
+            caption=text,
+            reply_markup=reply_markup,
+            parse_mode='HTML'
+        )
         # Устанавливаем флаг ожидания поиска
         context.user_data['waiting_for_search'] = True
     
@@ -567,7 +578,13 @@ async def show_profile_pm(query, user_id, is_own_profile=True):
         ]
     
     reply_markup = InlineKeyboardMarkup(keyboard)
-    await query.edit_message_text(text, reply_markup=reply_markup, parse_mode='HTML')
+    
+    # Используем edit_message_caption вместо edit_message_text
+    await query.edit_message_caption(
+        caption=text,
+        reply_markup=reply_markup,
+        parse_mode='HTML'
+    )
 
 async def show_my_reputation_menu(query):
     text = "<b>Выберите раздел:</b>"
@@ -582,7 +599,12 @@ async def show_my_reputation_menu(query):
     ]
     
     reply_markup = InlineKeyboardMarkup(keyboard)
-    await query.edit_message_text(text, reply_markup=reply_markup, parse_mode='HTML')
+    
+    await query.edit_message_caption(
+        caption=text,
+        reply_markup=reply_markup,
+        parse_mode='HTML'
+    )
 
 async def show_found_user_reputation_menu(query, target_user_id):
     text = "<b>Выберите раздел:</b>"
@@ -595,7 +617,12 @@ async def show_found_user_reputation_menu(query, target_user_id):
     ]
     
     reply_markup = InlineKeyboardMarkup(keyboard)
-    await query.edit_message_text(text, reply_markup=reply_markup, parse_mode='HTML')
+    
+    await query.edit_message_caption(
+        caption=text,
+        reply_markup=reply_markup,
+        parse_mode='HTML'
+    )
 
 async def handle_show_reputation(query):
     user_id = query.from_user.id
@@ -663,7 +690,7 @@ async def handle_show_reputation(query):
         else:
             from_user = last_positive.get("from_username", f"id{last_positive['from_user']}")
             date = datetime.fromisoformat(last_positive["created_at"]).strftime("%d/%m/%Y")
-            text = f"""✅ <b>Последний положительный отзыв</b>
+            text = f"""✅ <b>Последный положительный отзыв</b>
 
 От: @{from_user}
 Текст: {last_positive['text']}
@@ -689,7 +716,12 @@ async def handle_show_reputation(query):
     
     keyboard = [[InlineKeyboardButton("↩️ Назад", callback_data=back_button)]]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    await query.edit_message_text(text, reply_markup=reply_markup, parse_mode='HTML')
+    
+    await query.edit_message_caption(
+        caption=text,
+        reply_markup=reply_markup,
+        parse_mode='HTML'
+    )
 
 async def handle_found_user_reputation(query, context):
     target_user_id = context.user_data.get('found_user_id')
@@ -757,7 +789,12 @@ async def handle_found_user_reputation(query, context):
     
     keyboard = [[InlineKeyboardButton("↩️ Назад", callback_data=back_button)]]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    await query.edit_message_text(text, reply_markup=reply_markup, parse_mode='HTML')
+    
+    await query.edit_message_caption(
+        caption=text,
+        reply_markup=reply_markup,
+        parse_mode='HTML'
+    )
 
 async def show_main_menu(query):
     user_id = query.from_user.id
@@ -773,7 +810,12 @@ ID - [{user_id}]
     ]
     
     reply_markup = InlineKeyboardMarkup(keyboard)
-    await query.edit_message_text(text, reply_markup=reply_markup, parse_mode='HTML')
+    
+    await query.edit_message_caption(
+        caption=text,
+        reply_markup=reply_markup,
+        parse_mode='HTML'
+    )
 
 async def handle_all_messages(update: Update, context: CallbackContext) -> None:
     """Обработка ВСЕХ сообщений"""
