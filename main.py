@@ -392,13 +392,13 @@ async def start(update: Update, context: CallbackContext) -> None:
         except:
             pass
     
-    text = f"""<b>🛡️ TESS | Репутация — твоя гарантия безопасности!</b>
+    text = f"""<b>🏆 CATALYST | Репутация — вселенная безграничных возможностей!</b>
 ID - [{user_id}]
 
 • Здесь можно отправить или просмотреть репутацию пользователя, а также провести сделку! Выберите раздел:"""
     
     keyboard = [
-        [InlineKeyboardButton("✍️ Отправить репутацию", callback_data='send_reputation')],
+        [InlineKeyboardButton("🔗 Отправить репутацию", callback_data='send_reputation')],
         [InlineKeyboardButton("🔎 Найти пользователя", callback_data='search_user')],
         [InlineKeyboardButton("🏆 Мой профиль", callback_data='profile')]
     ]
@@ -438,7 +438,7 @@ async def show_profile_deeplink(update: Update, target_user_id: int, context: Ca
     
     keyboard = [
         [InlineKeyboardButton("Посмотреть репутацию", callback_data='view_found_user_reputation')],
-        [InlineKeyboardButton("✍️ Отправить репутацию", callback_data='send_reputation')],
+        [InlineKeyboardButton("🔗 Отправить репутацию", callback_data='send_reputation')],
         [InlineKeyboardButton("↩️ Назад", callback_data='back_to_main')]
     ]
     
@@ -545,7 +545,7 @@ async def show_profile_pm(query, user_id, is_own_profile=True):
     else:
         keyboard = [
             [InlineKeyboardButton("Посмотреть репутацию", callback_data='view_found_user_reputation')],
-            [InlineKeyboardButton("✍️ Отправить репутацию", callback_data='send_reputation')],
+            [InlineKeyboardButton("🔗 Отправить репутацию", callback_data='send_reputation')],
             [InlineKeyboardButton("↩️ Назад", callback_data='search_user')]
         ]
     
@@ -744,13 +744,13 @@ async def handle_found_user_reputation(query, context):
 
 async def show_main_menu(query):
     user_id = query.from_user.id
-    text = f"""<b>🛡️ TESS | Репутация — твоя гарантия безопасности!</b>
+    text = f"""<b>🏆 CATALYST | Репутация — твоя гарантия безопасности!</b>
 ID - [{user_id}]
 
 • Здесь можно отправить или просмотреть репутацию пользователя, а также провести сделку! Выберите раздел:"""
     
     keyboard = [
-        [InlineKeyboardButton("✍️ Отправить репутацию", callback_data='send_reputation')],
+        [InlineKeyboardButton("🔗 Отправить репутацию", callback_data='send_reputation')],
         [InlineKeyboardButton("🔎 Найти пользователя", callback_data='search_user')],
         [InlineKeyboardButton("🏆 Мой профиль", callback_data='profile')]
     ]
@@ -907,7 +907,7 @@ ID - [{user_id}]
 • Здесь можно отправить или просмотреть репутацию пользователя, а также провести сделку! Выберите раздел:"""
     
     keyboard = [
-        [InlineKeyboardButton("✍️ Отправить репутацию", callback_data='send_reputation')],
+        [InlineKeyboardButton("🔗 Отправить репутацию", callback_data='send_reputation')],
         [InlineKeyboardButton("🔎 Найти пользователя", callback_data='search_user')],
         [InlineKeyboardButton("🏆 Мой профиль", callback_data='profile')]
     ]
