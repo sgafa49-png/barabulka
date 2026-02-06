@@ -35,8 +35,8 @@ if not TOKEN:
     print("ОШИБКА: TELEGRAM_TOKEN не найден!")
     sys.exit(1)
 
-# File ID вашей картинки (полученный ранее)
-PHOTO_FILE_ID = "AgACAgIAAxkBAAMWaYZDk44vd4stH-O3h215njpLmj0AAoQRaxtgcjBIUUoDPXBSmWoBAAMCAAN4AAM4BA"
+# Ссылка на фото в GitHub
+PHOTO_URL = "https://raw.githubusercontent.com/sgafa49-png/barabulka/main/IMG_0388.jpeg"
 
 # ========== БАЗА ДАННЫХ (УНИВЕРСАЛЬНАЯ) ==========
 def get_db_connection():
@@ -408,17 +408,19 @@ ID - [{user_id}]
     
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    # Отправляем фото с текстом в качестве подписи
+    # Отправляем фото с GitHub
     try:
+        print(f"Отправляю фото по URL: {PHOTO_URL}")
         await update.message.reply_photo(
-            photo=PHOTO_FILE_ID,
+            photo=PHOTO_URL,
             caption=text,
             reply_markup=reply_markup,
             parse_mode='HTML'
         )
+        print("✅ Фото успешно отправлено")
     except Exception as e:
-        # Если ошибка с фото, отправляем только текст
-        print(f"Ошибка отправки фото: {e}")
+        print(f"❌ Ошибка отправки фото: {e}")
+        # Если ошибка - отправляем только текст
         await update.message.reply_text(text, reply_markup=reply_markup, parse_mode='HTML')
 
 async def show_profile_deeplink(update: Update, target_user_id: int, context: CallbackContext):
@@ -1043,6 +1045,7 @@ def main():
         print("Платформа: Локальный запуск (SQLite)")
     
     print(f"Токен: {'Установлен' if TOKEN else 'Отсутствует!'}")
+    print(f"URL фото: {PHOTO_URL}")
     print("=" * 60)
     
     # Инициализация БД
