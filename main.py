@@ -2,9 +2,8 @@ import os
 import re
 import sys
 import sqlite3
-import asyncio
 from datetime import datetime
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, MenuButtonCommands
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
     Application, 
     CommandHandler, 
@@ -1058,8 +1057,8 @@ async def handle_search_message_pm(update: Update, context: CallbackContext) -> 
     context.user_data.pop('waiting_for_search', None)
 
 # ========== ЗАПУСК БОТА ==========
-async def main_async():
-    """Асинхронная основная функция"""
+def main():
+    """Основная функция запуска"""
     print("=" * 60)
     print("TESS REPUTATION BOT")
     print("=" * 60)
@@ -1114,23 +1113,13 @@ async def main_async():
     # Обработчик ВСЕХ сообщений (включая группы)
     app.add_handler(MessageHandler(filters.ALL & ~filters.COMMAND, handle_all_messages))
     
-    # Устанавливаем кнопку меню
-    await app.bot.set_chat_menu_button(
-        menu_button=MenuButtonCommands()
-    )
-    print("✅ Кнопка 'Меню' установлена")
-    
     # Запускаем бота
     print("Бот запускается...")
     print("Готов к работе!")
     print("=" * 60)
     
-    # Запускаем polling
-    await app.run_polling(allowed_updates=Update.ALL_TYPES)
-
-def main():
-    """Точка входа - запускаем асинхронную функцию"""
-    asyncio.run(main_async())
+    # Простой запуск
+    app.run_polling(allowed_updates=Update.ALL_TYPES)
 
 if __name__ == '__main__':
     main()
