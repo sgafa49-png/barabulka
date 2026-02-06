@@ -775,29 +775,48 @@ async def handle_all_messages(update: Update, context: CallbackContext) -> None:
         await handle_group_reputation(update, context)
 
 async def handle_group_reputation(update: Update, context: CallbackContext) -> None:
-    """Обработка репутации в групповом чате"""
+    """Обработка репутации в групповом чате - ИСПРАВЛЕННАЯ ВЕРСИЯ"""
     user_id = update.effective_user.id
     text = update.message.text or update.message.caption or ""
     
+    # === ИСПРАВЛЕНИЕ БАГА: Проверяем, начинается ли сообщение с команды репутации ===
+    # Очищаем текст для проверки
+    clean_text = text.strip().lower()
+    
+    # Проверяем, начинается ли сообщение с команды репутации
+    # ИЛИ содержит команду репутации после переноса строки
+    is_rep_command = False
+    
+    # Проверка начала сообщения
+    if clean_text.startswith(('+rep', '-rep', '+реп', '-реп')):
+        is_rep_command = True
+    
+    # Проверка после переноса строки (для длинных сообщений)
+    if not is_rep_command and '\n' in text:
+        lines = text.lower().split('\n')
+        for line in lines:
+            if line.strip().startswith(('+rep', '-rep', '+реп', '-реп')):
+                is_rep_command = True
+                break
+    
+    # Если это НЕ команда репутации - игнорируем (выходим из функции)
+    if not is_rep_command:
+        return
+    
+    # ===== Только если это точно команда репутации =====
+    # Проверяем наличие фото
+    if not update.message.photo:
+        await update.message.reply_text("❗️ <b>Необходимо прикрепить фото/скриншот</b>", parse_mode='HTML')
+        return
+    
+    # Получаем целевого пользователя из текста
+    target_identifier = None
+    
+    # Паттерны для поиска username/id в команде репутации
     patterns = [
         r'[-+](?:rep|реп)\s+(@?\w+)',
         r'[-+](?:rep|реп)\s+(\d+)',
     ]
-    
-    has_rep_pattern = False
-    for pattern in patterns:
-        if re.search(pattern, text, re.IGNORECASE):
-            has_rep_pattern = True
-            break
-    
-    if has_rep_pattern and not update.message.photo:
-        await update.message.reply_text("❗️ <b>Необходимо прикрепить фото/скриншот</b>", parse_mode='HTML')
-        return
-    
-    if not update.message.photo:
-        return
-    
-    target_identifier = None
     
     for pattern in patterns:
         match = re.search(pattern, text, re.IGNORECASE)
