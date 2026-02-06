@@ -2,6 +2,7 @@ import os
 import re
 import sys
 import sqlite3
+import asyncio
 from datetime import datetime
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, MenuButtonCommands
 from telegram.ext import (
@@ -1056,14 +1057,6 @@ async def handle_search_message_pm(update: Update, context: CallbackContext) -> 
     context.user_data.pop('waiting_for_search', None)
 
 # ========== ЗАПУСК БОТА ==========
-async def post_init(application):
-    """Функция, выполняемая после инициализации бота"""
-    # Устанавливаем кнопку "Меню" для всех пользователей
-    await application.bot.set_chat_menu_button(
-        menu_button=MenuButtonCommands()
-    )
-    print("✅ Кнопка 'Меню' установлена для всех пользователей")
-
 def main():
     """Основная функция запуска"""
     print("=" * 60)
@@ -1120,16 +1113,36 @@ def main():
     # Обработчик ВСЕХ сообщений (включая группы)
     app.add_handler(MessageHandler(filters.ALL & ~filters.COMMAND, handle_all_messages))
     
-    # Запускаем бота
-    print("Бот запускается...")
-    print("Готов к работе!")
-    print("=" * 60)
+    # Функция для установки кнопки меню
+    async def init_menu():
+        """Устанавливаем кнопку меню один раз при запуске"""
+        await app.bot.set_chat_menu_button(
+            menu_button=MenuButtonCommands()
+        )
+        print("✅ Кнопка 'Меню' установлена")
     
-    # Запускаем бота с установкой кнопки меню
-    app.run_polling(
-        allowed_updates=Update.ALL_TYPES,
-        post_init=post_init  # Устанавливаем кнопку "Меню" после инициализации
-    )
+    # Запускаем бота с инициализацией меню
+    print("Бот запускается...")
+    
+    # Создаем и запускаем event loop
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    
+    try:
+        # Устанавливаем кнопку меню
+        loop.run_until_complete(init_menu())
+        
+        # Запускаем polling
+        print("Готов к работе!")
+        print("=" * 60)
+        app.run_polling(
+            allowed_updates=Update.ALL_TYPES,
+            close_loop=False  # Не закрывать loop после остановки
+        )
+    except KeyboardInterrupt:
+        print("\nБот остановлен")
+    finally:
+        loop.close()
 
 if __name__ == '__main__':
     main()
