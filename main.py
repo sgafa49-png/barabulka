@@ -310,13 +310,15 @@ async def get_photo_id(update: Update, context: CallbackContext) -> None:
         file_id = update.message.photo[-1].file_id
         await update.message.reply_text(f"✅ File ID получен:\n\n`{file_id}`\n\nСкопируйте этот ID и используйте в коде.", parse_mode='Markdown')
         print(f"=== FILE_ID ДЛЯ КАРТИНКИ ===")
-        print(f"PHOTO_FILE_ID = \"{file_id}\"")
+        print(f'PHOTO_FILE_ID = "{file_id}"')
         print(f"==========================")
     elif update.message.document:
         file_id = update.message.document.file_id
         await update.message.reply_text(f"✅ File ID документа:\n\n`{file_id}`", parse_mode='Markdown')
     else:
         await update.message.reply_text("📸 Отправьте мне картинку, и я дам вам её file_id")
+        # Устанавливаем флаг ожидания фото
+        context.user_data['waiting_for_file_id'] = True
 
 # ========== TELEGRAM HANDLERS ==========
 async def quick_profile(update: Update, context: CallbackContext) -> None:
@@ -776,9 +778,21 @@ ID - [{user_id}]
 
 async def handle_all_messages(update: Update, context: CallbackContext) -> None:
     """Обработка ВСЕХ сообщений"""
+    # Проверяем, что есть message
+    if not update.message:
+        return
+    
     user_id = update.effective_user.id
     username = update.effective_user.username or f"id{user_id}"
     save_user(user_id, username)
+    
+    # Если фото в личке и ждем file_id
+    if update.message.chat.type == 'private' and update.message.photo:
+        if context.user_data.get('waiting_for_file_id'):
+            file_id = update.message.photo[-1].file_id
+            await update.message.reply_text(f"✅ File ID получен:\n\n`{file_id}`", parse_mode='Markdown')
+            context.user_data.pop('waiting_for_file_id', None)
+            return
     
     if update.message.chat.type == 'private':
         # Проверяем состояния в правильном порядке
@@ -791,23 +805,20 @@ async def handle_all_messages(update: Update, context: CallbackContext) -> None:
         await handle_group_reputation(update, context)
 
 async def handle_group_reputation(update: Update, context: CallbackContext) -> None:
-    """Обработка репутации в групповом чате - ИСПРАВЛЕННАЯ ВЕРСИЯ"""
+    """Обработка репутации в групповом чате"""
     user_id = update.effective_user.id
     text = update.message.text or update.message.caption or ""
     
-    # === ИСПРАВЛЕНИЕ БАГА: Проверяем, начинается ли сообщение с команды репутации ===
-    # Очищаем текст для проверки
+    # Проверяем, начинается ли сообщение с команды репутации
     clean_text = text.strip().lower()
     
-    # Проверяем, начинается ли сообщение с команды репутации
-    # ИЛИ содержит команду репутации после переноса строки
     is_rep_command = False
     
     # Проверка начала сообщения
     if clean_text.startswith(('+rep', '-rep', '+реп', '-реп')):
         is_rep_command = True
     
-    # Проверка после переноса строки (для длинных сообщений)
+    # Проверка после переноса строки
     if not is_rep_command and '\n' in text:
         lines = text.lower().split('\n')
         for line in lines:
@@ -815,11 +826,10 @@ async def handle_group_reputation(update: Update, context: CallbackContext) -> N
                 is_rep_command = True
                 break
     
-    # Если это НЕ команда репутации - игнорируем (выходим из функции)
+    # Если это НЕ команда репутации - игнорируем
     if not is_rep_command:
         return
     
-    # ===== Только если это точно команда репутации =====
     # Проверяем наличие фото
     if not update.message.photo:
         await update.message.reply_text("❗️ <b>Необходимо прикрепить фото/скриншот</b>", parse_mode='HTML')
@@ -890,6 +900,11 @@ async def handle_reputation_message_pm(update: Update, context: CallbackContext)
         await update.message.reply_text("❗️ <b>Необходимо прикрепить фото/скриншот</b>", parse_mode='HTML')
         return
     
+    # Если текст пустой, просим добавить текст к фото
+    if not text.strip():
+        await update.message.reply_text("❌ <b>Добавьте текст к фото!</b>\n\nПример: +rep @username сделка прошла успешно", parse_mode='HTML')
+        return
+    
     patterns = [r'[-+](?:rep|реп)\s+(@?\w+)']
     target_identifier = None
     
@@ -900,7 +915,7 @@ async def handle_reputation_message_pm(update: Update, context: CallbackContext)
             break
     
     if not target_identifier:
-        await update.message.reply_text("Неверный формат")
+        await update.message.reply_text("❌ <b>Неверный формат</b>\n\nИспользуйте: +rep @username или -rep @username", parse_mode='HTML')
         return
     
     target_info = {"id": None, "username": None}
@@ -931,7 +946,7 @@ async def handle_reputation_message_pm(update: Update, context: CallbackContext)
         photo_id=update.message.photo[-1].file_id
     )
     
-    await update.message.reply_text("Сохранено")
+    await update.message.reply_text("✅ <b>Репутация сохранена!</b>", parse_mode='HTML')
     await show_main_menu_from_message(update, context, user_id)
 
 async def show_main_menu_from_message(update: Update, context: CallbackContext, user_id: int):
@@ -1041,6 +1056,14 @@ def main():
     print(f"Токен: {'Установлен' if TOKEN else 'Отсутствует!'}")
     print("=" * 60)
     
+    # Сначала сбрасываем вебхук (важно для Railway!)
+    import requests
+    try:
+        response = requests.get(f"https://api.telegram.org/bot{TOKEN}/deleteWebhook?drop_pending_updates=true")
+        print(f"Сброс вебхука: {response.json()}")
+    except Exception as e:
+        print(f"Ошибка сброса вебхука: {e}")
+    
     # Инициализация БД
     init_db()
     
@@ -1049,7 +1072,7 @@ def main():
     
     # Команды для личных сообщений
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("getid", get_photo_id))  # Добавляем команду для получения file_id
+    app.add_handler(CommandHandler("getid", get_photo_id))
     
     # Команды для чатов (групп)
     app.add_handler(CommandHandler("v", quick_profile))
