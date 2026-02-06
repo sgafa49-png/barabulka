@@ -3,7 +3,7 @@ import re
 import sys
 import sqlite3
 from datetime import datetime
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, MenuButtonCommands
 from telegram.ext import (
     Application, 
     CommandHandler, 
@@ -1056,6 +1056,14 @@ async def handle_search_message_pm(update: Update, context: CallbackContext) -> 
     context.user_data.pop('waiting_for_search', None)
 
 # ========== ЗАПУСК БОТА ==========
+async def post_init(application):
+    """Функция, выполняемая после инициализации бота"""
+    # Устанавливаем кнопку "Меню" для всех пользователей
+    await application.bot.set_chat_menu_button(
+        menu_button=MenuButtonCommands()
+    )
+    print("✅ Кнопка 'Меню' установлена для всех пользователей")
+
 def main():
     """Основная функция запуска"""
     print("=" * 60)
@@ -1072,13 +1080,13 @@ def main():
             from flask import Flask
             from threading import Thread
             
-            app = Flask('')
-            @app.route('/')
+            app_flask = Flask('')
+            @app_flask.route('/')
             def home(): 
                 return "Бот работает!"
             
             def run():
-                app.run(host='0.0.0.0', port=8080)
+                app_flask.run(host='0.0.0.0', port=8080)
             
             t = Thread(target=run, daemon=True)
             t.start()
@@ -1117,7 +1125,11 @@ def main():
     print("Готов к работе!")
     print("=" * 60)
     
-    app.run_polling(allowed_updates=Update.ALL_TYPES)
+    # Запускаем бота с установкой кнопки меню
+    app.run_polling(
+        allowed_updates=Update.ALL_TYPES,
+        post_init=post_init  # Устанавливаем кнопку "Меню" после инициализации
+    )
 
 if __name__ == '__main__':
     main()
