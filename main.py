@@ -35,6 +35,9 @@ if not TOKEN:
     print("ОШИБКА: TELEGRAM_TOKEN не найден!")
     sys.exit(1)
 
+# File ID вашей картинки (полученный ранее)
+PHOTO_FILE_ID = "AgACAgIAAxkBAAMWaYZDk44vd4stH-O3h215njpLmj0AAoQRaxtgcjBIUUoDPXBSmWoBAAMCAAN4AAM4BA"
+
 # ========== БАЗА ДАННЫХ (УНИВЕРСАЛЬНАЯ) ==========
 def get_db_connection():
     """Возвращает соединение с БД в зависимости от платформы"""
@@ -302,24 +305,6 @@ def get_last_negative(user_id):
             return rep
     return None
 
-# ========== КОМАНДА ДЛЯ ПОЛУЧЕНИЯ FILE_ID ==========
-async def get_photo_id(update: Update, context: CallbackContext) -> None:
-    """Команда для получения file_id фото"""
-    if update.message.photo:
-        # Получаем file_id самой большой версии фото (последний элемент в массиве)
-        file_id = update.message.photo[-1].file_id
-        await update.message.reply_text(f"✅ File ID получен:\n\n`{file_id}`\n\nСкопируйте этот ID и используйте в коде.", parse_mode='Markdown')
-        print(f"=== FILE_ID ДЛЯ КАРТИНКИ ===")
-        print(f'PHOTO_FILE_ID = "{file_id}"')
-        print(f"==========================")
-    elif update.message.document:
-        file_id = update.message.document.file_id
-        await update.message.reply_text(f"✅ File ID документа:\n\n`{file_id}`", parse_mode='Markdown')
-    else:
-        await update.message.reply_text("📸 Отправьте мне картинку, и я дам вам её file_id")
-        # Устанавливаем флаг ожидания фото
-        context.user_data['waiting_for_file_id'] = True
-
 # ========== TELEGRAM HANDLERS ==========
 async def quick_profile(update: Update, context: CallbackContext) -> None:
     """Быстрый просмотр профиля в чате"""
@@ -422,7 +407,19 @@ ID - [{user_id}]
     ]
     
     reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.message.reply_text(text, reply_markup=reply_markup, parse_mode='HTML')
+    
+    # Отправляем фото с текстом в качестве подписи
+    try:
+        await update.message.reply_photo(
+            photo=PHOTO_FILE_ID,
+            caption=text,
+            reply_markup=reply_markup,
+            parse_mode='HTML'
+        )
+    except Exception as e:
+        # Если ошибка с фото, отправляем только текст
+        print(f"Ошибка отправки фото: {e}")
+        await update.message.reply_text(text, reply_markup=reply_markup, parse_mode='HTML')
 
 async def show_profile_deeplink(update: Update, target_user_id: int, context: CallbackContext):
     """Показать профиль при переходе из чата"""
@@ -786,14 +783,6 @@ async def handle_all_messages(update: Update, context: CallbackContext) -> None:
     username = update.effective_user.username or f"id{user_id}"
     save_user(user_id, username)
     
-    # Если фото в личке и ждем file_id
-    if update.message.chat.type == 'private' and update.message.photo:
-        if context.user_data.get('waiting_for_file_id'):
-            file_id = update.message.photo[-1].file_id
-            await update.message.reply_text(f"✅ File ID получен:\n\n`{file_id}`", parse_mode='Markdown')
-            context.user_data.pop('waiting_for_file_id', None)
-            return
-    
     if update.message.chat.type == 'private':
         # Проверяем состояния в правильном порядке
         if context.user_data.get('waiting_for_search'):
@@ -1056,14 +1045,6 @@ def main():
     print(f"Токен: {'Установлен' if TOKEN else 'Отсутствует!'}")
     print("=" * 60)
     
-    # Сначала сбрасываем вебхук (важно для Railway!)
-    import requests
-    try:
-        response = requests.get(f"https://api.telegram.org/bot{TOKEN}/deleteWebhook?drop_pending_updates=true")
-        print(f"Сброс вебхука: {response.json()}")
-    except Exception as e:
-        print(f"Ошибка сброса вебхука: {e}")
-    
     # Инициализация БД
     init_db()
     
@@ -1072,7 +1053,6 @@ def main():
     
     # Команды для личных сообщений
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("getid", get_photo_id))
     
     # Команды для чатов (групп)
     app.add_handler(CommandHandler("v", quick_profile))
