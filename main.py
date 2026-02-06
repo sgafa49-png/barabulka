@@ -302,6 +302,22 @@ def get_last_negative(user_id):
             return rep
     return None
 
+# ========== КОМАНДА ДЛЯ ПОЛУЧЕНИЯ FILE_ID ==========
+async def get_photo_id(update: Update, context: CallbackContext) -> None:
+    """Команда для получения file_id фото"""
+    if update.message.photo:
+        # Получаем file_id самой большой версии фото (последний элемент в массиве)
+        file_id = update.message.photo[-1].file_id
+        await update.message.reply_text(f"✅ File ID получен:\n\n`{file_id}`\n\nСкопируйте этот ID и используйте в коде.", parse_mode='Markdown')
+        print(f"=== FILE_ID ДЛЯ КАРТИНКИ ===")
+        print(f"PHOTO_FILE_ID = \"{file_id}\"")
+        print(f"==========================")
+    elif update.message.document:
+        file_id = update.message.document.file_id
+        await update.message.reply_text(f"✅ File ID документа:\n\n`{file_id}`", parse_mode='Markdown')
+    else:
+        await update.message.reply_text("📸 Отправьте мне картинку, и я дам вам её file_id")
+
 # ========== TELEGRAM HANDLERS ==========
 async def quick_profile(update: Update, context: CallbackContext) -> None:
     """Быстрый просмотр профиля в чате"""
@@ -1033,6 +1049,7 @@ def main():
     
     # Команды для личных сообщений
     app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("getid", get_photo_id))  # Добавляем команду для получения file_id
     
     # Команды для чатов (групп)
     app.add_handler(CommandHandler("v", quick_profile))
